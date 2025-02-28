@@ -1,2 +1,0 @@
-# Sudoku
-Estructura de datos
