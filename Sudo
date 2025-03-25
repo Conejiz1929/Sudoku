@@ -1,0 +1,246 @@
+package com.mycompany.sudoku;
+
+import java.util.Random;
+import java.util.Scanner;
+
+// Clase principal que maneja la lógica del Sudoku, interactuando con el árbol para la resolución automática.
+public class Sudoku {
+
+    private static final int GRID_SIZE = 9;  // Tamaño del tablero (9x9)
+    private static ArbolSudoku arbolNumeros = new ArbolSudoku(); // Instancia del árbol para almacenar los números usados
+
+    public static void main(String[] args) {
+        int[][] tablero = generarTablero();  // Genera un tablero inicial
+        Scanner scanner = new Scanner(System.in);  // Para recibir la entrada del usuario
+        boolean continuar = true;
+
+        // Bucle para que el jugador ingrese valores en el tablero
+        while (continuar) {
+            imprimirTablero(tablero);  // Imprime el tablero actual
+            System.out.println("Ingrese la fila (0-8), columna (0-8) y numero (1-9) separados por espacios, o -1 para resolver:");
+            int fila = scanner.nextInt();  // Fila
+            if (fila == -1) {  // Si el jugador ingresa -1, comienza la resolución automática
+                continuar = false;
+                break;
+            }
+
+            int columna = scanner.nextInt();  // Columna
+            int numero = scanner.nextInt();  // Número
+
+            // Verifica si la ubicación es válida y el número se puede colocar
+            if (tablero[fila][columna] == 0 && esUbicacionValida(tablero, numero, fila, columna)) {
+                tablero[fila][columna] = numero;  // Coloca el número en la celda
+                arbolNumeros.insertar(numero);  // Guarda el número en el árbol
+            } else {
+                System.out.println("Movimiento invalido. Intente de nuevo.");
+            }
+        }
+
+        // Intenta resolver el tablero usando retroceso y el árbol
+        if (resolverTableroConArbol(tablero)) {
+            System.out.println("Tablero resuelto correctamente");
+        } else {
+            System.out.println("No se puede resolver");
+        }
+
+        imprimirTablero(tablero);  // Imprime el tablero resuelto
+        scanner.close();
+        arbolNumeros.inorden();  // Imprime los números insertados en el árbol en orden
+    }
+
+    /**
+     *
+     * Metodo que resuelve el tablero utilizando retroceso y el árbol de
+     * números.
+     *
+     * @param tablero El tablero a resolver.
+     * @return true si se ha resuelto, false en caso contrario.
+     */
+    private static boolean resolverTableroConArbol(int[][] tablero) {
+        for (int fila = 0; fila < GRID_SIZE; fila++) {
+            for (int columna = 0; columna < GRID_SIZE; columna++) {
+                if (tablero[fila][columna] == 0) {  // Si encontramos una celda vacía
+                    for (int numero = 1; numero <= GRID_SIZE; numero++) {  // Probar números del 1 al 9
+                        if (esUbicacionValida(tablero, numero, fila, columna)) {
+                            tablero[fila][columna] = numero;  // Coloca el número en la celda
+                            arbolNumeros.insertar(numero);  // Guarda el número en el árbol
+
+                            if (resolverTableroConArbol(tablero)) {  // Recursividad
+                                return true;
+                            } else {
+                                tablero[fila][columna] = 0;  // Si no funciona, deshace el movimiento
+                                arbolNumeros.eliminar(numero);  // Elimina el número del árbol
+                            }
+                        }
+                    }
+                    return false;  // Si no podemos colocar ningún número, el tablero no tiene solución
+                }
+            }
+        }
+        return true;  // Si no quedan celdas vacías, el tablero está resuelto
+    }
+
+    /**
+     * Genera un tablero de Sudoku válido con algunas celdas vacías. El tablero
+     * puede ser resoluble o no, dependiendo de un valor aleatorio.
+     *
+     * @return Una matriz 9x9 representando el tablero de Sudoku generado
+     * aleatoriamente.
+     */
+    private static int[][] generarTablero() {
+        Random rand = new Random();
+
+        // Determina  si el tablero será resoluble 
+        boolean esResoluble = rand.nextInt(2) == 0;
+
+        // Inicializa el tablero vacío
+        int[][] tablero = new int[GRID_SIZE][GRID_SIZE];
+
+        // Genera un tablero de Sudoku completamente resuelto
+        resolverTableroConArbol(tablero);
+
+        // Determina la cantidad de celdas vacías en función de si el tablero es resoluble o no
+        int celdasVacias = esResoluble ? 30 : 50;
+
+        // Vacía aleatoriamente la cantidad de celdas seleccionadas
+        for (int i = 0; i < celdasVacias; i++) {
+            int fila, columna;
+            do {
+                fila = rand.nextInt(GRID_SIZE);
+                columna = rand.nextInt(GRID_SIZE);
+            } while (tablero[fila][columna] == 0);  // Evita seleccionar una celda ya vacía
+
+            tablero[fila][columna] = 0;  // Marca la celda como vacía
+        }
+
+        // Si el tablero no es resoluble, introduce un error en una celda aleatoria
+        if (!esResoluble) {
+            int filaError = rand.nextInt(GRID_SIZE);
+            int columnaError = rand.nextInt(GRID_SIZE);
+
+            // Genera un número inválido para la celda (distinto del número original)
+            int numeroInvalido = (tablero[filaError][columnaError] + 1) % 9 + 1;
+            tablero[filaError][columnaError] = numeroInvalido;
+        }
+
+        return tablero;
+    }
+
+    /**
+     * Imprime el tablero de Sudoku en consola con formato legible, incluyendo
+     * separadores entre las cajas 3x3 para mejorar la visualización.
+     *
+     * @param tablero Matriz 9x9 que representa el estado actual del tablero de
+     * Sudoku.
+     */
+    private static void imprimirTablero(int[][] tablero) {
+        // Recorre todas las filas del tablero
+        for (int fila = 0; fila < GRID_SIZE; fila++) {
+            // Imprime una línea divisoria horizontal después de cada bloque de 3 filas
+            if (fila % 3 == 0 && fila != 0) {
+                System.out.println("-----");
+            }
+
+            // Recorre todas las columnas del tablero
+            for (int columna = 0; columna < GRID_SIZE; columna++) {
+                // Imprime un separador vertical después de cada bloque de 3 columnas
+                if (columna % 3 == 0 && columna != 0) {
+                    System.out.print("| ");
+                }
+
+                // Imprime el valor de la celda seguido de un espacio
+                System.out.print(tablero[fila][columna] + " ");
+            }
+
+            // Salto de línea para pasar a la siguiente fila del tablero
+            System.out.println();
+        }
+    }
+
+    /**
+     * Metodo para verificar si un numero ya está en la fila especificada.
+     *
+     * @param tablero El tablero de Sudoku.
+     * @param numero El número a verificar.
+     * @param fila La fila a comprobar.
+     * @return true si el número ya está en la fila, false si no lo está.
+     */
+    private static boolean esNumeroEnFila(int[][] tablero, int numero, int fila) {
+        for (int i = 0; i < GRID_SIZE; i++) {
+            if (tablero[fila][i] == numero) {
+                return true;  // Numero encontrado en la fila
+            }
+        }
+        return false;  // Numero no encontrado
+    }
+
+    /**
+     * Metodo para verificar si un número ya está en la columna especificada.
+     *
+     * @param tablero El tablero de Sudoku.
+     * @param numero El numero a verificar.
+     * @param columna La columna a comprobar.
+     * @return true si el número ya está en la columna, false si no lo está.
+     */
+    private static boolean esNumeroEnColumna(int[][] tablero, int numero, int columna) {
+        for (int i = 0; i < GRID_SIZE; i++) {
+            if (tablero[i][columna] == numero) {
+                return true;  // Número encontrado en la columna
+            }
+        }
+        return false;  // Número no encontrado
+    }
+
+    /**
+     * Verifica si un número específico está presente dentro de la caja 3x3
+     * correspondiente en un tablero de Sudoku.
+     *
+     * @param tablero Matriz 9x9 que representa el tablero de Sudoku.
+     * @param numero Número que se desea verificar si está en la caja 3x3.
+     * @param fila Fila de la celda en la que se quiere comprobar la existencia
+     * del número.
+     * @param columna Columna de la celda en la que se quiere comprobar la
+     * existencia del número.
+     * @return true si el número está en la caja 3x3, false si no está.
+     */
+    private static boolean esNumeroEnCaja(int[][] tablero, int numero, int fila, int columna) {
+        // Determina la fila inicial de la caja 3x3 a la que pertenece la celda
+        int filaCaja = fila - fila % 3;
+
+        // Determina la columna inicial de la caja 3x3 a la que pertenece la celda
+        int columnaCaja = columna - columna % 3;
+
+        // Recorre la caja 3x3 para verificar si el número ya está presente
+        for (int i = filaCaja; i < filaCaja + 3; i++) {
+            for (int j = columnaCaja; j < columnaCaja + 3; j++) {
+                if (tablero[i][j] == numero) {
+                    return true;  // Número encontrado en la caja 3x3
+                }
+            }
+        }
+
+        return false;  // Número no encontrado en la caja 3x3
+    }
+
+    /**
+     * Verifica si es válida la ubicación para colocar un número en el tablero
+     * de Sudoku. La ubicación es válida si el número no se repite en la misma
+     * fila, columna o caja 3x3.
+     *
+     * @param tablero Matriz 9x9 que representa el tablero de Sudoku.
+     * @param numero Número que se desea colocar en la celda.
+     * @param fila Índice de la fila en la que se quiere colocar el número.
+     * @param columna Índice de la columna en la que se quiere colocar el
+     * número.
+     * @return true si la ubicación es válida (no hay repeticiones en fila,
+     * columna o caja), false en caso contrario.
+     */
+    private static boolean esUbicacionValida(int[][] tablero, int numero, int fila, int columna) {
+        // La ubicación es válida si el número no está en la misma fila,
+        // ni en la misma columna, ni en la misma caja 3x3
+        return !esNumeroEnFila(tablero, numero, fila)
+                && !esNumeroEnColumna(tablero, numero, columna)
+                && !esNumeroEnCaja(tablero, numero, fila, columna);
+    }
+
+}
