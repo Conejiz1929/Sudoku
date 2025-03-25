@@ -1,0 +1,124 @@
+package com.mycompany.sudoku;
+
+// Clase que implementa un Arbol Binario de Búsqueda para almacenar los números utilizados en el Sudoku
+public class ArbolSudoku {
+
+    // Nodo raiz del árbol
+    Nodo raiz;
+
+    // Constructor de la clase que inicializa el arbol vacío
+    public ArbolSudoku() {
+        this.raiz = null;
+    }
+
+    // Método público que permite insertar un número en el árbol.
+    public void insertar(int valor) {
+        raiz = insertarRec(raiz, valor);
+    }
+
+    /**
+     * Método recursivo que inserta un número en el árbol de manera adecuada. Se
+     * sigue la propiedad del Árbol Binario de Búsqueda. la raiz es el nodo
+     * actual que estamos considerando para la inserción. valor es el número que
+     * queremos insertar.
+     *
+     * @return El nodo actualizado después de la inserción.
+     */
+    private Nodo insertarRec(Nodo raiz, int valor) {
+        // Si llegamos a una posición vacía, creamos un nuevo nodo con el valor.
+        if (raiz == null) {
+            return new Nodo(valor);
+        }
+        // Si el valor es menor que el nodo actual, lo insertamos en el subárbol izquierdo.
+        if (valor < raiz.dato) {
+            raiz.izquierda = insertarRec(raiz.izquierda, valor);
+        } // Si el valor es mayor, lo insertamos en el subárbol derecho.
+        else if (valor > raiz.dato) {
+            raiz.derecha = insertarRec(raiz.derecha, valor);
+        }
+        // Si el valor ya existe, no hacemos nada (suponemos que no se permiten duplicados).
+        return raiz;
+    }
+
+    /**
+     * Método público que permite eliminar un número del árbol.
+     *
+     * @param valor El número a eliminar del árbol.
+     */
+    public void eliminar(int valor) {
+        raiz = eliminarRec(raiz, valor);
+    }
+
+    /**
+     * Método recursivo que elimina un número del árbol.
+     *
+     * @param raiz El nodo actual que estamos considerando para la eliminación.
+     * @param valor El valor a eliminar.
+     * @return El nodo actualizado después de la eliminación.
+     */
+    private Nodo eliminarRec(Nodo raiz, int valor) {
+        // Si el nodo está vacío, no podemos eliminar nada.
+        if (raiz == null) {
+            return raiz;
+        }
+        // Si el valor es menor, buscamos en el subárbol izquierdo.
+        if (valor < raiz.dato) {
+            raiz.izquierda = eliminarRec(raiz.izquierda, valor);
+        } // Si el valor es mayor, buscamos en el subárbol derecho.
+        else if (valor > raiz.dato) {
+            raiz.derecha = eliminarRec(raiz.derecha, valor);
+        } // Si encontramos el valor, eliminamos el nodo.
+        else {
+            // Caso 1: Si no tiene hijos, simplemente eliminamos el nodo.
+            if (raiz.izquierda == null) {
+                return raiz.derecha;
+            } // Caso 2: Si tiene solo un hijo, devolvemos ese hijo.
+            else if (raiz.derecha == null) {
+                return raiz.izquierda;
+            }
+            // Caso 3: Si tiene dos hijos, encontramos el nodo más pequeño en el subárbol derecho.
+            raiz.dato = minValue(raiz.derecha);
+            // Eliminar el nodo que contiene el valor mínimo del subárbol derecho.
+            raiz.derecha = eliminarRec(raiz.derecha, raiz.dato);
+        }
+        return raiz;
+    }
+
+    /**
+     * Metodo que encuentra el valor más pequeño de un subárbol.
+     *
+     * @param raiz El nodo actual que se está considerando.
+     * @return El valor mas pequeño encontrado en el subarbol.
+     */
+    private int minValue(Nodo raiz) {
+        int minValue = raiz.dato;
+        // Continuamos recorriendo el subarbol izquierdo hasta llegar al valor mínimo.
+        while (raiz.izquierda != null) {
+            minValue = raiz.izquierda.dato;
+            raiz = raiz.izquierda;
+        }
+        return minValue;
+    }
+
+    /**
+     * Método que recorre el arbol en orden (inorden) e imprime los valores.
+     */
+    public void inorden() {
+        inordenRec(raiz);
+        System.out.println();  // Salto de línea al final
+    }
+
+    /**
+     * Metodo recursivo que recorre el arbol en orden (Izquierda - Raíz -
+     * Derecha).
+     *
+     * @param raiz El nodo actual que estamos considerando.
+     */
+    private void inordenRec(Nodo raiz) {
+        if (raiz != null) {
+            inordenRec(raiz.izquierda);  // Recorre el subarbol izquierdo
+            System.out.print(raiz.dato + " ");  // Imprime el valor del nodo
+            inordenRec(raiz.derecha);  // Recorre el subarbol derecho
+        }
+    }
+}
