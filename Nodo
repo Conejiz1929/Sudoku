@@ -1,0 +1,14 @@
+package com.mycompany.sudoku;
+
+//Clase que representa un nodo de un árbol binario de búsqueda.
+public class Nodo {
+
+    int dato;
+    Nodo izquierda, derecha;
+
+    // Constructor que inicializa el nodo con un valor
+    public Nodo(int dato) {
+        this.dato = dato;
+        this.izquierda = this.derecha = null; // Los hijos inicialmente son nulos
+    }
+}
